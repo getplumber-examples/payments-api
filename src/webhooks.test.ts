@@ -54,6 +54,14 @@ describe("provider webhooks", () => {
     expect(await (await deliver(body, sign(body, SECRET))).json()).toEqual({ applied: false });
   });
 
+  it("records a refund.succeeded confirmation", async () => {
+    const id = await pendingPayment();
+    const body = JSON.stringify({ id: "evt_refund", type: "refund.succeeded", data: { paymentId: id, refundId: "re_1", amount: 500 } });
+    const res = await deliver(body, sign(body, SECRET));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ applied: true });
+  });
+
   it("returns 404 for an event about an unknown payment", async () => {
     const body = JSON.stringify({ id: "evt_404", type: "payment.succeeded", data: { paymentId: "pay_missing" } });
     expect((await deliver(body, sign(body, SECRET))).status).toBe(404);
