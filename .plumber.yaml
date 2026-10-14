@@ -1,0 +1,11 @@
+
+extends: plumber:default
+github:
+  controls:
+    githubActionMustComeFromAuthorizedSources:
+      enabled: true
+      trustSameOrgActions: false
+      minimumStars: 0
+    actionsMustBePinnedByCommitSha:
+      enabled: true
+      trustedOwners: []
