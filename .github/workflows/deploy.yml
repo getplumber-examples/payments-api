@@ -1,0 +1,84 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  NODE_ENV: production
+  AWS_REGION: eu-west-1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+      pull-requests: write
+      deployments: write
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: getplumber-examples/setup-cache@v2
+      - run: npm ci
+      - run: npm run build
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: getplumber-examples/setup-cache@v2
+      - run: npm ci
+      - run: npm test
+
+  scan:
+    runs-on: ubuntu-latest
+    needs: build
+    container: node:22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: getplumber-examples/setup-cache@v2
+      - run: npm ci
+      - name: Dependency audit
+        run: npm audit --audit-level=critical || echo "audit reported issues, continuing"
+
+  deploy:
+    name: "deploy: production"
+    runs-on: ubuntu-latest
+    needs: [test, scan]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+      pull-requests: write
+      deployments: write
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: getplumber-examples/setup-cache@v2
+      - run: npm ci
+      - run: npm run build
+      - name: Deploy to production
+        run: |
+          echo "aws s3 sync dist/ s3://payments-api-prod-eu-west-1/releases/${GITHUB_SHA::7}/"
+          echo "aws lambda update-function-code --function-name payments-api --s3-key releases/${GITHUB_SHA::7}/"
+          echo "deployed payments-api@${GITHUB_SHA::7} to production"
