@@ -6,7 +6,6 @@ on:
   pull_request:
 
 env:
-  NODE_ENV: production
   AWS_REGION: eu-west-1
 
 jobs:
