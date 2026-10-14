@@ -60,7 +60,7 @@ export function createApp(options: AppOptions) {
   app.post("/webhooks/provider", async (c) => {
     const raw = await c.req.text();
     if (!verifySignature(raw, c.req.header(SIGNATURE_HEADER), options.webhookSecret)) {
-      return c.json({ error: "invalid signature" }, 401);
+      return c.json({ error: "invalid signature", reason: "hmac_mismatch" }, 401);
     }
     let event: ProviderEvent;
     try {
