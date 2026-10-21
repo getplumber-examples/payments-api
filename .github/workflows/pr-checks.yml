@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: changed
-        uses: tj-actions/changed-files@v47.0.6
+        uses: tj-actions/changed-files@v44
         with:
           files_yaml: |
             src:
