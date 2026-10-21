@@ -1,12 +1,5 @@
 # payments-api
 
-> ⚠️ **Intentionally vulnerable demo. Do not copy this repository or its
-> pipeline.** It was built for a [Plumber](https://getplumber.io) video that
-> shows how a pipeline that is always green can still ship your source code
-> and secrets to a third party. Nothing here exfiltrates anything: the
-> "compromised" action only prints a line. See
-> [`getplumber-examples/setup-cache`](https://github.com/getplumber-examples/setup-cache).
-
 A small TypeScript API for the checkout team: payments, refunds and provider
 webhooks. Built on [Hono](https://hono.dev), tested with
 [Vitest](https://vitest.dev), compiled with `tsc`.
