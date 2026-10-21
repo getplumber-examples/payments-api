@@ -1,0 +1,58 @@
+name: pr-checks
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  changes:
+    name: detect changed files
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.changed.outputs.src_any_changed }}
+      src_files: ${{ steps.changed.outputs.src_all_changed_files }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: changed
+        uses: tj-actions/changed-files@v47.0.6
+        with:
+          files_yaml: |
+            src:
+              - src/**
+              - package.json
+              - package-lock.json
+              - tsconfig.json
+              - tsconfig.build.json
+      - name: List changed source files
+        if: steps.changed.outputs.src_any_changed == 'true'
+        env:
+          CHANGED_FILES: ${{ steps.changed.outputs.src_all_changed_files }}
+        run: |
+          echo "changed source files:"
+          for f in $CHANGED_FILES; do echo "  $f"; done
+
+  typecheck:
+    needs: changes
+    if: needs.changes.outputs.src == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: getplumber-examples/setup-cache@v2
+      - run: npm ci
+      - run: npm run typecheck
+
+  test:
+    needs: changes
+    if: needs.changes.outputs.src == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: getplumber-examples/setup-cache@v2
+      - run: npm ci
+      - run: npm test
